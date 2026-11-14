@@ -10,6 +10,8 @@ using System.Windows.Threading;
 namespace BD2Fishing.Desktop;
 public partial class FishingWindow:Window
 {
+ // A disabled start button shows the current status line as its ToolTip, so the missing step is one hover away.
+ private void HintStart(){string reason=ReasonText.Text;StartButton.ToolTip=StartButton.IsEnabled||reason.Length==0?null:reason;}
  public bool HostedAutomationEnabled => link.Enabled || starting || !controlQueue.IsCompleted || connecting;
 
  private WindowLanguage? language;
@@ -29,8 +31,9 @@ public partial class FishingWindow:Window
   root=dataRoot??FishingIdentity.DataRoot;if(dataRoot==null)FishingStorage.ImportSettings(root);link=new(root);InitializeComponent();Title="连续钓鱼";
   var s=FishingJson.Read<FishingSettings>(Path.Combine(FishingStorage.Preferences(root),"settings.json"))??new();
   if(!FishingControl.ValidSettings(s.NextCastMilliseconds,s.CastGauge))s=new();
-  IntervalBox.Text=s.NextCastMilliseconds.ToString();CastBox.Text=(s.CastGauge*100).ToString("0.#",CultureInfo.InvariantCulture);WeakBox.IsChecked=s.PreferWeak;AutoSellBox.IsChecked=s.AutoSell;LoadRetention(s.Retention);AutoApproachBox.IsChecked=s.AutoApproach;AutoBaitBox.IsChecked=s.AutoBait;AutoMapBox.IsChecked=s.AutoMapRenewal;
+  IntervalBox.Text=s.NextCastMilliseconds.ToString();CastBox.Text=(s.CastGauge*100).ToString("0.#",CultureInfo.InvariantCulture);WeakBox.IsChecked=s.PreferWeak;AutoSellBox.IsChecked=s.AutoSell;LoadRetention(s.Retention);SellOptions.Visibility=s.AutoSell?Visibility.Visible:Visibility.Collapsed;AutoApproachBox.IsChecked=s.AutoApproach;AutoBaitBox.IsChecked=s.AutoBait;AutoMapBox.IsChecked=s.AutoMapRenewal;
   language=new(this,LanguagePreference.Read(FishingStorage.Preferences(root)));LanguageBox.SelectedIndex=language.Catalog.Language=="zh-CN"?0:1;
+  System.Windows.Controls.ToolTipService.SetShowOnDisabled(StartButton,true);StartButton.IsEnabledChanged+=(_,_)=>HintStart();var hintProperty=System.ComponentModel.DependencyPropertyDescriptor.FromProperty(System.Windows.Controls.TextBlock.TextProperty,typeof(System.Windows.Controls.TextBlock));EventHandler hintChanged=(_,_)=>HintStart();hintProperty.AddValueChanged(ReasonText,hintChanged);Closed+=(_,_)=>hintProperty.RemoveValueChanged(ReasonText,hintChanged);HintStart();
   initialized=true;timer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(250)};timer.Tick+=async(_,_)=>await RefreshAsync();if(connected)timer.Start();
  }
  private void LanguageChanged(object sender,SelectionChangedEventArgs e)
@@ -47,8 +50,10 @@ public partial class FishingWindow:Window
  }
  private async void SettingsChanged(object sender,RoutedEventArgs e)
  {
+  // Retention choices only matter while automatic selling is on; hide them otherwise.
+  if(SellOptions!=null)SellOptions.Visibility=AutoSellBox.IsChecked==true?Visibility.Visible:Visibility.Collapsed;
   if(!initialized||closing)return;
-  try{var settings=Settings();await QueueControl(()=>{if(!closing)link.Configure(settings);});if(!closing){SettingsHint.Text="设置已保存；收线和长按仍按帧判断。";SettingsHint.Foreground=(Brush)FindResource("MutedInk");}}
+  try{var settings=Settings();await QueueControl(()=>{if(!closing)link.Configure(settings);});if(!closing){SettingsHint.Text="设置已保存。";SettingsHint.Foreground=(Brush)FindResource("MutedInk");}}
   catch(Exception ex){FishingDiagnostics.Write(root,"settings.failed",error:ex);if(!closing){SettingsHint.Text=ex.Message;SettingsHint.Foreground=Brushes.Firebrick;}}
  }
  private async void ConnectClick(object sender,RoutedEventArgs e)

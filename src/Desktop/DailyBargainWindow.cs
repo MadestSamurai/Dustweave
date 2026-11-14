@@ -58,7 +58,7 @@ public sealed partial class DailyBargainWindow : Window
         var actions = new Grid { Margin = new(0, 16, 0, 0) };
         actions.ColumnDefinitions.Add(new() { Width = GridLength.Auto }); actions.ColumnDefinitions.Add(new());
         actions.ColumnDefinitions.Add(new() { Width = GridLength.Auto }); actions.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
-        start.SetResourceReference(StyleProperty, "PrimaryButton"); start.Margin = new(12, 0, 0, 0);
+        start.SetResourceReference(StyleProperty, "PrimaryButton"); start.Margin = new(12, 0, 0, 0); ToolWindowDesign.ExplainDisabled(start, status);
         stop.Margin = new(12, 0, 0, 0); Grid.SetColumn(stop, 2); Grid.SetColumn(start, 3);
         actions.Children.Add(read); actions.Children.Add(stop); actions.Children.Add(start);
         DockPanel.SetDock(actions, Dock.Bottom); layout.Children.Add(actions);

@@ -151,7 +151,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
             if (eventRoles.Contains(evt["Role"]?.GetValue<string>() ?? "") && DailyEvidence.SameActor(evt["Frame"]!.AsObject(), op["before"]!["Frame"]!.AsObject()))
             {
                 long sequence = DailyEvidence.Integer(evt["Sequence"]);
-                if (bySequence.TryGetValue(sequence, out var prior) && !JsonNode.DeepEquals(prior, evt))
+                if (bySequence.TryGetValue(sequence, out var prior) && !DailyLogEvidence.SameEventFacts(prior, evt))
                     throw new InvalidDataException("Conflicting native event sequence");
                 bySequence[sequence] = evt;
             }
@@ -455,9 +455,23 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 unresolved.Add(entry);
                 continue;
             }
+            JsonArray events;
+            try { events = Events(op); }
+            catch (InvalidDataException error)
+            {
+                // A conflicting old receipt cannot establish success or authorize
+                // replay. Keep both records and let this stage recheck current
+                // game state; unrelated tasks must still reach their own adapters.
+                op["recovery_error"] = error.Message;
+                Save(op);
+                entry["reason"] = error.Message;
+                entry["receipt_unresolved"] = true;
+                unresolved.Add(entry);
+                continue;
+            }
             if (op["state"]!.GetValue<string>() is "previewing" or "preview_ready" or "unknown_preview")
             {
-                if (role == DailyFreeDrawProof.Role && DailyFreeDrawStage.AbandonedPreview(op, current, Events(op)))
+                if (role == DailyFreeDrawProof.Role && DailyFreeDrawStage.AbandonedPreview(op, current, events))
                 {
                     op["state"] = "superseded";
                     op["reconciliation"] = new JsonObject { ["method"] = "unsubmitted_free_preview_closed", ["at"] = driver.UtcTicks,
@@ -473,7 +487,6 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 unresolved.Add(entry);
                 continue;
             }
-            var events = Events(op);
             if (DailyFieldTalentProof.ConfirmedCountedReceipt(op, events) is { } confirmedTalent)
             {
                 op["state"] = "completed";

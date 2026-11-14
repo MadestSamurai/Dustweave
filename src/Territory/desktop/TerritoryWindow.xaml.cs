@@ -7,6 +7,11 @@ using System.Windows.Threading;
 namespace BD2Territory.Desktop;
 public partial class TerritoryWindow : Window
 {
+ // A blank planting budget means unlimited (stored as 0); the field shows a placeholder instead of 0.
+ private static bool ParseBudget(string text,out long value){value=0;return text.Trim().Length==0||long.TryParse(text,out value);}
+ private void BudgetTextChanged(object sender,System.Windows.Controls.TextChangedEventArgs e){if(BudgetPlaceholder!=null)BudgetPlaceholder.Visibility=BudgetBox.Text.Length==0?Visibility.Visible:Visibility.Collapsed;}
+ // A disabled start button shows the current status line as its ToolTip, so the missing step is one hover away.
+ private void HintStart(){string reason=ReasonText.Text;StartButton.ToolTip=StartButton.IsEnabled||reason.Length==0?null:reason;}
  public bool HostedAutomationEnabled => link.Enabled || starting || !controlQueue.IsCompleted || connecting;
 
  private readonly string root;
@@ -35,13 +40,14 @@ public partial class TerritoryWindow : Window
   SellThresholdBox.Text=settings.SellThreshold.ToString();CookingBox.IsChecked=settings.Cooking;CookingBatchBox.Text=settings.CookingBatch.ToString();LoggingBox.IsChecked=settings.Logging;MiningBox.IsChecked=settings.Mining;FarmingBox.IsChecked=settings.Farming;
   SellCookingBatchBox.IsChecked=settings.SellCookingBatches;CookingSaleBatchBox.Text=settings.CookingSaleBatch.ToString();SellCookingForPlantingBox.IsChecked=settings.SellCookingForPlanting;
   NavMeshBox.IsChecked=settings.UseNavMesh;VehicleBox.IsChecked=settings.UseVehicle;DashBox.IsChecked=settings.DashRecovery;
-  Set(IntervalBox,settings.IntervalMs.ToString());Set(BudgetBox,settings.PlantingBudget.ToString());Set(DataPathBox,TerritoryStorage.DiagnosticRoot(root));
+  Set(IntervalBox,settings.IntervalMs.ToString());Set(BudgetBox,settings.PlantingBudget>0?settings.PlantingBudget.ToString():"");Set(DataPathBox,TerritoryStorage.DiagnosticRoot(root));
+  System.Windows.Controls.ToolTipService.SetShowOnDisabled(StartButton,true);StartButton.IsEnabledChanged+=(_,_)=>HintStart();var hintProperty=System.ComponentModel.DependencyPropertyDescriptor.FromProperty(System.Windows.Controls.TextBlock.TextProperty,typeof(System.Windows.Controls.TextBlock));EventHandler hintChanged=(_,_)=>HintStart();hintProperty.AddValueChanged(ReasonText,hintChanged);Closed+=(_,_)=>hintProperty.RemoveValueChanged(ReasonText,hintChanged);HintStart();
   initialized=true;UpdatePlantingControls();timer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(500)};timer.Tick+=async(_,_)=>await RefreshAsync();
   Closing+=OnClosing;
  }
  private TerritorySettings Settings()
  {
-  if(!int.TryParse(CookingBatchBox.Text,out int cookingBatch)||!int.TryParse(IntervalBox.Text,out int interval)||!long.TryParse(BudgetBox.Text,out long budget))throw new InvalidOperationException("间隔和预算请输入整数。");
+  if(!int.TryParse(CookingBatchBox.Text,out int cookingBatch)||!int.TryParse(IntervalBox.Text,out int interval)||!ParseBudget(BudgetBox.Text,out long budget))throw new InvalidOperationException("间隔和预算请输入整数。");
   if(!int.TryParse(SellThresholdBox.Text,out int threshold)||!SurplusSales.ValidThreshold(threshold))throw new InvalidOperationException("售卖保留数量必须是 100–9900 的整数。");
   if(!int.TryParse(CookingSaleBatchBox.Text,out int saleBatch)||!CookingSales.ValidBatch(saleBatch))throw new InvalidOperationException("料理累计售卖数量必须是 1–9900 的整数。");
   var s=new TerritorySettings{AutoSell=true,SellThreshold=threshold,FixedCrop=PlantingModeBox.SelectedIndex==1,FixedSeedId=selectedSeed,Cooking=CookingBox.IsChecked==true,CookingBatch=cookingBatch,RecipeId=selectedRecipe,Logging=LoggingBox.IsChecked==true,Mining=MiningBox.IsChecked==true,Farming=FarmingBox.IsChecked==true,UseNavMesh=NavMeshBox.IsChecked==true,UseVehicle=VehicleBox.IsChecked==true,DashRecovery=DashBox.IsChecked==true,IntervalMs=interval,PlantingBudget=budget};

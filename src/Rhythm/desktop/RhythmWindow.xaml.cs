@@ -7,6 +7,8 @@ using System.Windows.Threading;
 using BD2Rhythm.Localization;
 namespace BD2Rhythm.Desktop;
 public partial class RhythmWindow:Window {
+ // A disabled start button shows the current status line as its ToolTip, so the missing step is one hover away.
+ private void HintStart(){string reason=ReasonText.Text;StartButton.ToolTip=StartButton.IsEnabled||reason.Length==0?null:reason;}
  public bool HostedAutomationEnabled => link.Enabled || connecting;
  readonly string root,data;
  readonly RhythmControlLink link;
@@ -21,6 +23,7 @@ public partial class RhythmWindow:Window {
   var s=RhythmStorage.LoadSettings(data,dataRoot??RhythmIdentity.DataRoot);
   JitterBox.Text=s.JitterMs.ToString();OffsetBox.Text=s.OffsetMs.ToString();
   LanguageBox.SelectedIndex=language.Language=="en-US"?1:0;ApplyLanguage();
+  System.Windows.Controls.ToolTipService.SetShowOnDisabled(StartButton,true);StartButton.IsEnabledChanged+=(_,_)=>HintStart();var hintProperty=System.ComponentModel.DependencyPropertyDescriptor.FromProperty(System.Windows.Controls.TextBlock.TextProperty,typeof(System.Windows.Controls.TextBlock));EventHandler hintChanged=(_,_)=>HintStart();hintProperty.AddValueChanged(ReasonText,hintChanged);Closed+=(_,_)=>hintProperty.RemoveValueChanged(ReasonText,hintChanged);HintStart();
   initialized=true;timer.Tick+=async(_,_)=>await RefreshAsync();timer.Start();
  }
  void Set(TextBlock target,string text){target.Tag=text;target.Text=language.Text(text);}
@@ -85,6 +88,7 @@ public partial class RhythmWindow:Window {
   if(!RhythmControlLink.Fresh(s,DateTime.UtcNow)){
    if(connected){Set(StateText,link.Enabled?"等待游戏恢复":"连接未就绪");Set(ReasonText,link.Enabled?"游戏暂无新状态，等待恢复。":"没有新鲜的游戏连接状态，请先连接。");}return;
   }
+  LiveDetails.Visibility=Visibility.Visible; // Live figures appear with the first fresh game state.
   Set(StateText,link.Enabled?(s!.State switch{"playing"=>"正在演奏","paused"=>"游戏已暂停","error"=>"演奏已暂停","stopping"=>"正在释放输入",_=>"已开启 · 等待曲目"}):"已连接 · 自动演奏关闭");
   Set(ReasonText,link.Enabled?s!.Reason:"开启自动演奏后，在游戏中选曲并开始。");
   SongText.Tag=null;SongText.Text=language.Text("曲目：")+(string.IsNullOrEmpty(s!.Song)?language.Text("尚未识别"):s.Song);

@@ -26,7 +26,7 @@ public partial class ApostleToolPanel : UserControl, IDisposable
     {
         this.session = session; this.canStart = canStart;
         locale = HostedToolLocale.Begin(L.Code);
-        InitializeComponent(); BoardHost.Content = board;
+        InitializeComponent(); BoardHost.Content = board; ToolWindowDesign.ExplainDisabled(StartButton, StatusText);
         var p = session.LoadSettings(); ClearGoal.IsChecked = p.Clear50; RareGoal.IsChecked = p.Rare;
         AutoNext.IsChecked = p.AutoNext; StopRound.IsChecked = p.StopAfterRound; Interval.Text = p.IntervalMs.ToString();
         initialized = true; session.Diagnostic += OnDiagnostic;

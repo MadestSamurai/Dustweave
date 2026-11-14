@@ -8,12 +8,12 @@
    <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource select-boss}" Margin="0,0,0,8"/><ComboBox x:Name="BossChoice" SelectedIndex="0" SelectionChanged="SelectionChanged" AutomationProperties.Name="{DynamicResource select-boss}"><ComboBoxItem Content="{DynamicResource boss-1}"/><ComboBoxItem Content="{DynamicResource boss-2}"/></ComboBox></StackPanel>
    <StackPanel Grid.Column="4"><TextBlock Text="{DynamicResource select-difficulty}" Margin="0,0,0,8"/><ComboBox x:Name="DifficultyChoice" SelectedIndex="2" SelectionChanged="SelectionChanged" AutomationProperties.Name="{DynamicResource select-difficulty}"><ComboBoxItem Content="{DynamicResource difficulty-1}"/><ComboBoxItem Content="{DynamicResource difficulty-2}"/><ComboBoxItem Content="{DynamicResource difficulty-3}"/></ComboBox></StackPanel>
   </Grid>
-  <Border Grid.Row="2" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="20">
+  <Border x:Name="LiveCard" Grid.Row="2" Visibility="Collapsed" Margin="0,0,0,18" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="20">
    <StackPanel><TextBlock x:Name="PlayerText" Margin="0,0,0,10"/><ProgressBar x:Name="PlayerBar" Height="8" Maximum="1" Foreground="{DynamicResource Primary}" AutomationProperties.Name="{DynamicResource player}"/>
     <TextBlock x:Name="BossText" Margin="0,22,0,10"/><ProgressBar x:Name="BossBar" Height="8" Maximum="1" Foreground="{DynamicResource Primary}" AutomationProperties.Name="{DynamicResource boss}"/>
    </StackPanel>
   </Border>
-  <StackPanel Grid.Row="3" Margin="0,18,0,20"><TextBlock x:Name="StatusText" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" LineHeight="22"/><TextBlock Text="{DynamicResource hint}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/></StackPanel>
+  <StackPanel Grid.Row="3" Margin="0,0,0,20"><TextBlock x:Name="StatusText" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" LineHeight="22"/><TextBlock Text="{DynamicResource hint}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/></StackPanel>
   <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <Button x:Name="ConnectButton" Content="{DynamicResource reconnect}" HorizontalAlignment="Left" Click="Connect"/>
    <Button Grid.Column="1" x:Name="PauseButton" Content="{DynamicResource pause}" Click="Pause" Margin="0,0,10,0"/>

@@ -39,7 +39,7 @@
       <TextBlock Text="{DynamicResource NavMeshHint}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,18"/>
       <WrapPanel>
        <StackPanel Margin="0,0,28,8"><TextBlock Text="{DynamicResource Ui43}" Margin="0,0,0,6"/><TextBox x:Name="IntervalBox" Width="150" HorizontalAlignment="Left" LostFocus="SettingsChanged" AutomationProperties.Name="{DynamicResource Ui44}"/></StackPanel>
-       <StackPanel Margin="0,0,0,8"><TextBlock Text="{DynamicResource Ui45}" Margin="0,0,0,6"/><TextBox x:Name="BudgetBox" Width="180" HorizontalAlignment="Left" LostFocus="SettingsChanged" AutomationProperties.Name="{DynamicResource Ui46}"/></StackPanel>
+       <StackPanel Margin="0,0,0,8"><TextBlock Text="{DynamicResource Ui45}" Margin="0,0,0,6"/><Grid Width="180" HorizontalAlignment="Left"><TextBox x:Name="BudgetBox" LostFocus="SettingsChanged" TextChanged="BudgetTextChanged" AutomationProperties.Name="{DynamicResource Ui46}"/><TextBlock x:Name="BudgetPlaceholder" Text="{DynamicResource BudgetUnlimited}" IsHitTestVisible="False" VerticalAlignment="Center" Margin="11,0,11,0" Foreground="{DynamicResource MutedInk}"/></Grid></StackPanel>
       </WrapPanel>
       <TextBlock x:Name="SettingsHint" Text="{DynamicResource Ui47}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,3,0,0"/>
      </StackPanel>

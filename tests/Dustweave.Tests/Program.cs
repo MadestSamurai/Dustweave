@@ -1,4 +1,8 @@
 using Dustweave;
+if(args.Length==1&&args[0]=="--main-thread-readiness")
+{
+    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(await MainThreadReadinessCases.RunChild()));return;
+}
 if(args.Length == 3 && args[0] == "--prepare-startup-runtime")
 {
     // Passive compilation only: no runtime attachment, account or game input.
@@ -263,6 +267,7 @@ await Group("NativeDailyBattle", async () => { NativeDailyBattleCases.Run(cases)
 await Group("EventPreset", () => EventPresetCases.Run(root, cases));
 await Group("EventTradeBoundary", () => Sync(() => EventTradeBoundaryCases.Run(cases)));
 await Group("ConnectionAccess", () => ConnectionAccessCases.Run(cases));
+await Group("MainThreadReadiness", () => MainThreadReadinessCases.Run(cases));
 await Group("HelperLifetime", () => HelperLifetimeCases.Run(cases));
 await Group("PackagedTravel", () => PackagedUtilityCases.Travel(root, cases));
 var unknown = selection.Except(available, StringComparer.OrdinalIgnoreCase).ToArray();

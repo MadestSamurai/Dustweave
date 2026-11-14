@@ -1,7 +1,9 @@
 using System.Globalization;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 using Dustweave.Accounts;
 using Dustweave.Compatibility;
 
@@ -77,13 +79,41 @@ internal static class DailyGamePreferenceStore
     internal static RegistryKey OpenRegistry(bool write)=>write?Registry.CurrentUser.CreateSubKey(SessionConstants.RegistrySubKey):
         Registry.CurrentUser.OpenSubKey(SessionConstants.RegistrySubKey)??throw new InvalidDataException("sandbox.preferences.empty");
     internal static GamePreferenceValue[] ReadValues(RegistryKey registry,GamePreferenceParts parts,long owner)=>registry.GetValueNames()
-        .Where(n=>AllowedValue(n,parts,owner)).Order(StringComparer.Ordinal).Select(n=>new GamePreferenceValue(n,registry.GetValueKind(n),
-            SessionRegistry.EncodeRegistryValue(registry.GetValueKind(n),registry.GetValue(n,null,RegistryValueOptions.DoNotExpandEnvironmentNames)!))).ToArray();
+        .Where(n=>AllowedValue(n,parts,owner)).Order(StringComparer.Ordinal).Select(n=>ReadValue(registry,n)).ToArray();
+    private static GamePreferenceValue ReadValue(RegistryKey registry,string name)
+    {
+        var kind=registry.GetValueKind(name);
+        byte[] bytes;
+        if(kind is RegistryValueKind.DWord or RegistryValueKind.QWord) {
+            // Some PlayerPrefs numerics have DWORD type but an eight-byte payload.
+            // RegistryKey.GetValue returns Int64 for those values (and pads short
+            // numerics). Read the bytes so neither width nor bits change in transit.
+            bytes=new byte[8];int size=bytes.Length;
+            int error=RegQueryValueEx(registry.Handle,name,IntPtr.Zero,out var actualKind,bytes,ref size);
+            if(error==234)throw new InvalidDataException("sandbox.preferences.invalid");
+            RegistryResult(error);
+            if(actualKind!=kind)throw new IOException("sandbox.preferences.changed");
+            Array.Resize(ref bytes,size);
+        } else bytes=SessionRegistry.EncodeRegistryValue(kind,registry.GetValue(name,null,RegistryValueOptions.DoNotExpandEnvironmentNames)!);
+        var value=new GamePreferenceValue(name,kind,bytes);_=Value(value);return value;
+    }
+    [DllImport("advapi32.dll",EntryPoint="RegQueryValueExW",CharSet=CharSet.Unicode)]
+    private static extern int RegQueryValueEx(SafeRegistryHandle key,string name,IntPtr reserved,out RegistryValueKind kind,byte[] data,ref int size);
+    [DllImport("advapi32.dll",EntryPoint="RegSetValueExW",CharSet=CharSet.Unicode)]
+    private static extern int RegSetValueEx(SafeRegistryHandle key,string name,int reserved,RegistryValueKind kind,byte[] data,int size);
+    private static void RegistryResult(int error)
+    {
+        if(error!=0)throw new IOException("sandbox.preferences.failed",new Win32Exception(error));
+    }
     internal static void WriteValues(RegistryKey registry,GamePreferenceSnapshot snapshot)
     {
         Validate(snapshot);
         foreach(string name in registry.GetValueNames().Where(n=>AllowedValue(n,snapshot.Parts,snapshot.Owner)))registry.DeleteValue(name,false);
-        foreach(var value in snapshot.Values)registry.SetValue(value.Name,Value(value),value.Kind);
+        foreach(var value in snapshot.Values) {
+            if(value.Kind==RegistryValueKind.DWord&&value.Bytes.Length==8)
+                RegistryResult(RegSetValueEx(registry.Handle,value.Name,0,value.Kind,value.Bytes,value.Bytes.Length));
+            else registry.SetValue(value.Name,Value(value),value.Kind);
+        }
         registry.Flush();
         var actual=ReadValues(registry,snapshot.Parts,snapshot.Owner);
         if(!ValuesEqual(actual,snapshot.Values))throw new IOException("sandbox.preferences.verify");
@@ -92,6 +122,7 @@ internal static class DailyGamePreferenceStore
         b.Any(w=>v.Name==w.Name&&v.Kind==w.Kind&&v.Bytes.AsSpan().SequenceEqual(w.Bytes)));
     private static object Value(GamePreferenceValue value)=>value.Kind switch {
         RegistryValueKind.DWord when value.Bytes.Length==4=>BitConverter.ToInt32(value.Bytes),
+        RegistryValueKind.DWord when value.Bytes.Length==8=>BitConverter.ToInt64(value.Bytes),
         RegistryValueKind.QWord when value.Bytes.Length==8=>BitConverter.ToInt64(value.Bytes),
         RegistryValueKind.Binary=>value.Bytes,
         RegistryValueKind.String=>Encoding.UTF8.GetString(value.Bytes),

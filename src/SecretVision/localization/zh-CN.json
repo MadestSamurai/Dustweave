@@ -21,7 +21,7 @@
   "target80": "80% 普通通关",
   "retry": "未达目标时自动重试",
   "attempts": "每关最多尝试次数",
-  "attempts-help": "0 表示不限次数；1–1000 限制尝试次数。",
+  "attempts-help": "留空表示不限次数；也可以填 1–1000。",
   "operation": "开始与停止",
   "operation-help": "开始会结束当前对局并重新开局。停止会释放输入并暂停；下次开始会新开一局。不会自动续命。",
   "idle": "尚未开始",
@@ -44,7 +44,7 @@
   "single-instance": "工具已经打开，请检查任务栏。",
   "invalid-stages": "请至少选择一个关卡。",
   "invalid-target": "请选择有效的通关目标。",
-  "invalid-attempts": "尝试次数须为 0–1000 的整数，已保留输入。",
+  "invalid-attempts": "尝试次数请留空，或填 1–1000 的整数；已保留输入。",
   "settings-unreadable": "设置暂时无法读取，原文件已保留。",
   "game-not-running": "请先启动并登录游戏。",
   "multiple-games": "检测到多个游戏进程，请只保留一个。",
@@ -62,5 +62,8 @@
   "stopping": "正在停止并释放输入…",
   "startup-error": "启动失败",
   "file-access": "本地文件暂时无法访问，请查看诊断中的路径和原因。",
-  "等待小游戏结算回读": "等待小游戏结算回读"
+  "等待小游戏结算回读": "等待小游戏结算回读",
+  "start-restarts": "游戏里有进行中的对局：点「开始」会结束它并重新开一局。",
+  "start-needs-connection": "先连接游戏。",
+  "attempts-unlimited": "不限"
 }

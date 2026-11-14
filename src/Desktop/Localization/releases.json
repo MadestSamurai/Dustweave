@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.7.4",
+  "Date": "2026-11-14",
+  "Notes": {
+    "zh-CN": [
+      "改善从账号管理启动游戏后的首次连接：等待游戏界面初始化，减少游戏已启动却提示操作失败的情况。",
+      "修复同步游戏设置时可能提示“不支持的注册表值类型：DWord”的问题，保留原有设置数值与登录信息。",
+      "修复旧操作记录导致日常无法继续的问题；保留已完成进度，避免无关任务被一起阻断。",
+      "改善多种工具的未连接、未就绪和按钮不可用提示，调整小窗口布局；部分不限次数与预算输入可留空。",
+      "优化钓鱼出售设置的显示和工具窗口关闭时的资源释放。"
+    ],
+    "zh-TW": [
+      "改善從帳號管理啟動遊戲後的首次連接：等待遊戲介面初始化，減少遊戲已啟動卻顯示操作失敗的情況。",
+      "修復同步遊戲設定時可能顯示「不支援的登錄值類型：DWord」的問題，保留原有設定數值與登入資訊。",
+      "修復舊操作紀錄導致日常無法繼續的問題；保留已完成進度，避免無關任務一併受阻。",
+      "改善多項工具的未連接、尚未就緒與按鈕無法使用提示，調整小視窗版面；部分不限次數與預算欄位可留空。",
+      "改善釣魚出售設定的顯示與工具視窗關閉時的資源釋放。"
+    ],
+    "en-US": [
+      "Improves the first connection after launching from Accounts by waiting for the game UI to initialize.",
+      "Fixes an unsupported DWord error when syncing game settings while preserving stored values and sign-in information.",
+      "Fixes old operation records blocking daily progress. Completed progress is preserved and unrelated tasks can continue.",
+      "Clarifies connection, readiness and disabled-button hints across tools, improves compact layouts, and allows some unlimited attempt and budget fields to be left blank.",
+      "Improves fishing sale settings and releases status listeners when tool windows close."
+    ]
+  }
+},
+{
   "Version": "1.7.3",
   "Date": "2026-11-13",
   "Notes": {

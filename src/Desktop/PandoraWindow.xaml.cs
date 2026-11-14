@@ -274,10 +274,12 @@ public partial class PandoraWindow : Window
             CharacterBox.ItemsSource = choices;
             CharacterBox.SelectedItem = wanted;
         }
-        CurrencyMode.IsEnabled = ChallengeMode.IsEnabled = StageBox.IsEnabled = CharacterBox.IsEnabled = !active && !polling;
+        CurrencyMode.IsEnabled = ChallengeMode.IsEnabled = CharacterBox.IsEnabled = !active && !polling;
+        StageBox.IsEnabled = !active && !polling && StageBox.Items.Count > 0;
         AutoEquipment.IsEnabled = !active && !polling;
         ConnectButton.IsEnabled = !active && !polling;
         ConnectButton.Visibility = !smoke && status == "disconnected" ? Visibility.Visible : Visibility.Collapsed;
+        ConnectButton.Tag = status == "disconnected" ? "next" : null;
         LoadingProgress.Visibility = connecting ? Visibility.Visible : Visibility.Collapsed;
         LoadingProgress.IsIndeterminate = connecting && SystemParameters.ClientAreaAnimation;
         LoadingProgress.Value = connecting ? 50 : 0;
@@ -287,7 +289,26 @@ public partial class PandoraWindow : Window
         StopButton.IsEnabled = active;
         StageHint.Text = L.Get(StageBox.Items.Count == 0 ? "pandora.entry" : "pandora.repeat");
         CharacterHint.Text = L.Get(nativeCharacters?.Count > 0 ? characterAvailable ? "pandora.character_hint" : "pandora.state.character-unavailable" : "pandora.character_loading");
-        StatusText.Text = L.Get("pandora.state." + (States.Contains(status) ? status : "ready"));
+        // "Ready" must be true: name the missing step instead while Start cannot work yet.
+        string? missing = client == null && !smoke ? "tools.start_needs_connection"
+            : !challenge && StageBox.Items.Count == 0 || challenge && nativeStages == null ? "pandora.state.needs-menu"
+            : challenge && !hasChallenge ? "pandora.state.no-challenge"
+            : !characterAvailable ? "pandora.state.character-unavailable" : null;
+        string shown = States.Contains(status) ? status : "ready";
+        StatusText.Text = L.Get(shown == "ready" && missing != null ? missing : "pandora.state." + shown);
+        StartButton.ToolTip = StartButton.IsEnabled || active || missing == null ? null : L.Get(missing);
+        // The band already carries the menu instruction; do not repeat it under each empty selector.
+        bool menuNeeded = shown == "ready" && missing == "pandora.state.needs-menu";
+        StageHint.Visibility = menuNeeded && StageBox.Items.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        CharacterHint.Visibility = menuNeeded && !(nativeCharacters?.Count > 0) ? Visibility.Collapsed : Visibility.Visible;
+        StatusBand.Tag = shown switch
+        {
+            "disconnected" => "attention", "connecting" => "preparing", "paused" => "stopped", "challenge-complete" => "done",
+            "ready" => missing == null ? "ready" : "waiting", _ => active ? "running" : "waiting"
+        };
+        // Round figures appear with the first live round, not as zeros and dashes.
+        LiveMetrics.Visibility = active || snapshot?["Completed"]?.ToString() is { Length: > 0 } settled && settled != "0" || (snapshot?["MaxHp"]?.GetValue<double>() ?? 0) > 0
+            ? Visibility.Visible : Visibility.Collapsed;
         RoundsText.Text = snapshot?["Completed"]?.ToString() ?? "0";
         double seconds = snapshot?["Seconds"]?.GetValue<double>() ?? 0;
         TimeText.Text = TimeSpan.FromSeconds(Math.Max(0, seconds)).ToString(@"mm\:ss");

@@ -242,6 +242,8 @@ public partial class MansionWindow : Window
         GoalProgress.Text = L.Get("mansion.goal80_progress", maximum);
         if (active && goal80 && maximum >= 80 && snapshot?["Result"] == null)
             StatusText.Text = L.Get("mansion.state.goal-finishing");
+        // A disabled Start repeats the current status, so the missing step is one hover away.
+        StartButton.ToolTip = StartButton.IsEnabled ? null : StatusText.Text;
         Map.Frame = snapshot;
         EmptyText.Visibility = snapshot?["Board"] is null ? Visibility.Visible : Visibility.Collapsed;
     }

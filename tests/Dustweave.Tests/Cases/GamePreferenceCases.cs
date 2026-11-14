@@ -1,8 +1,10 @@
 using Dustweave;
 using Dustweave.Compatibility;
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System.Runtime.InteropServices;
 
 static class GamePreferenceCases
 {
@@ -10,6 +12,7 @@ static class GamePreferenceCases
     {
         void Check(bool condition,string name){if(!condition)throw new Exception(name);cases.Add(name);}
         void Reject(Action action,string name){try{action();}catch(Exception e)when(e is InvalidDataException or IOException){cases.Add(name);return;}throw new Exception(name);}
+        RegistryRoundTrips(Check,Reject);
         var parts=GamePreferenceParts.Personal|GamePreferenceParts.Presentation|GamePreferenceParts.Gameplay;
         foreach(string name in new[]{"neon_access_token_h1862384816","neon_auth_member_h1293550423","IsAutoLogin_h601540819","StandaloneAutoLogin_h1463356620","LastUserOwnerIndex","StandalonePatchDataPath","LanguageGame_hbad","LanguageGame_extra","MicDeviceName"})
             Check(!DailyGamePreferenceStore.AllowedValue(name,parts,101),"Preferences exclude credential/device/unknown key: "+name);
@@ -42,7 +45,7 @@ static class GamePreferenceCases
         try {
             using var registry=Registry.CurrentUser.CreateSubKey(registryPath);
             registry.SetValue("LanguageGame_h123",3,RegistryValueKind.DWord);
-            registry.SetValue("SoundMaster_h123",new byte[]{0,0,0,0},RegistryValueKind.Binary);
+            RawWrite(registry,"SoundMaster_h123",RegistryValueKind.DWord,BitConverter.GetBytes(0.75));
             registry.SetValue("neon_access_token_h1862384816","synthetic-token",RegistryValueKind.String);
             var snapshot=DailyGamePreferenceStore.Export(account,player,parts,managed,source,work,registry);
             Check(snapshot.Owner==101&&snapshot.Tables.All(t=>t.Rows.All(r=>r[Array.IndexOf(t.Columns,"ownerIndex")]=="101.0"||r[Array.IndexOf(t.Columns,"ownerIndex")]=="101")),"Export selects the verified account partition");
@@ -68,6 +71,8 @@ static class GamePreferenceCases
             registry.SetValue("LanguageGame_h123",7);registry.SetValue("SoundBGM_h555",new byte[4],RegistryValueKind.Binary);
             DailyGamePreferenceStore.WriteValues(registry,snapshot);
             Check((int)registry.GetValue("LanguageGame_h123")! == 3&&registry.GetValue("SoundBGM_h555")==null,"Registry copy replaces values and restores absent-source defaults");
+            Check(RawRead(registry,"SoundMaster_h123").Bytes.AsSpan().SequenceEqual(BitConverter.GetBytes(0.75))&&
+                registry.GetValueKind("SoundMaster_h123")==RegistryValueKind.DWord,"Combined personal/display transfer preserves the eight-byte DWORD exactly");
             Check((string)registry.GetValue("neon_access_token_h1862384816")! == "synthetic-token","Copying preferences never modifies login credentials");
             Check(File.ReadAllBytes(dst).AsSpan().SequenceEqual(original),"Preparing a transfer never writes the actual target database");
             int idleChecks=0;
@@ -94,6 +99,82 @@ static class GamePreferenceCases
             Check(cleared.Owner==101&&cleared.Tables.All(t=>t.Rows.Length==0),"Clearing every preference still exports a verified empty account partition");
         } finally {Registry.CurrentUser.DeleteSubKeyTree(registryPath,false);}
         return Task.CompletedTask;
+    }
+    private static void RegistryRoundTrips(Action<bool,string> check,Action<Action,string> reject)
+    {
+        string path="Software\\Dustweave-PreferenceNumericTest-"+Guid.NewGuid().ToString("N");
+        try {
+            using var source=Registry.CurrentUser.CreateSubKey(path+"\\source");
+            using var target=Registry.CurrentUser.CreateSubKey(path+"\\target");
+            var fixtures=new GamePreferenceValue[] {
+                new("LanguageGame_h1",RegistryValueKind.DWord,BitConverter.GetBytes(3)),
+                new("FPS_SETTING_PC_h1",RegistryValueKind.DWord,BitConverter.GetBytes(int.MinValue)),
+                new("SoundMaster_h1",RegistryValueKind.DWord,BitConverter.GetBytes(0.75)),
+                new("SoundBGM_h1",RegistryValueKind.DWord,BitConverter.GetBytes(-1L)),
+                new("SoundVoice_h1",RegistryValueKind.QWord,BitConverter.GetBytes(long.MinValue)),
+                new("SoundSFX_h1",RegistryValueKind.Binary,[0,1,255,127]),
+                new("Resolution_h1",RegistryValueKind.String,System.Text.Encoding.Unicode.GetBytes("测试 resolution\0"))
+            };
+            foreach(var f in fixtures)RawWrite(source,f.Name,f.Kind,f.Bytes);
+            source.SetValue("neon_access_token_h1862384816","source-session",RegistryValueKind.String);
+            target.SetValue("neon_access_token_h1862384816","target-session",RegistryValueKind.String);
+            target.SetValue("auto_eat_food_flag_h1",1,RegistryValueKind.DWord);
+            RawWrite(target,"SoundMaster_h1",RegistryValueKind.DWord,BitConverter.GetBytes(0.125));
+            var prior=RawRead(target,"SoundMaster_h1");
+            var settings=DailyGamePreferenceStore.ReadValues(source,GamePreferenceParts.Presentation,0);
+            var incoming=new GamePreferenceSnapshot(1,new('a',64),"",GamePreferenceParts.Presentation,0,0,[],settings);
+            var before=incoming with{Values=DailyGamePreferenceStore.ReadValues(target,incoming.Parts,0)};
+            check(source.GetValue("SoundMaster_h1") is long,"Eight-byte DWORD fixture reproduces the CLR Int64 that the old encoder rejected");
+            check(settings.Length==fixtures.Length,"Numeric capture remains limited to the selected setting whitelist");
+            // Exercise the exchange/backup serialization, not only in-memory values.
+            incoming=System.Text.Json.JsonSerializer.Deserialize<GamePreferenceSnapshot>(System.Text.Json.JsonSerializer.Serialize(incoming))!;
+            for(int pass=0;pass<2;pass++) {
+                DailyGamePreferenceStore.WriteValues(target,incoming);
+                foreach(var f in fixtures) {
+                    var actual=RawRead(target,f.Name);
+                    check(actual.Kind==f.Kind&&actual.Bytes.AsSpan().SequenceEqual(f.Bytes),$"Forward/repeated copy {pass}: exact native type and bytes for {f.Name}");
+                }
+            }
+            RawWrite(target,"SoundMaster_h1",RegistryValueKind.DWord,BitConverter.GetBytes(0.625));
+            var reverse=incoming with{Values=DailyGamePreferenceStore.ReadValues(target,incoming.Parts,0)};
+            DailyGamePreferenceStore.WriteValues(source,reverse);
+            check(RawRead(source,"SoundMaster_h1").Bytes.AsSpan().SequenceEqual(BitConverter.GetBytes(0.625)),"Reverse direction copies the changed eight-byte DWORD without narrowing");
+            DailyGamePreferenceStore.WriteValues(target,before);
+            check(DailyGamePreferenceStore.ValuesEqual(DailyGamePreferenceStore.ReadValues(target,before.Parts,0),before.Values)&&
+                RawRead(target,prior.Name).Bytes.AsSpan().SequenceEqual(prior.Bytes),"Restoring the destination backup retains its original eight-byte value and absent settings");
+            check((string)source.GetValue("neon_access_token_h1862384816")! == "source-session"&&
+                (string)target.GetValue("neon_access_token_h1862384816")! == "target-session"&&
+                (int)target.GetValue("auto_eat_food_flag_h1")! == 1,"Both directions and restoration preserve credentials and unselected gameplay settings");
+            foreach(var invalid in new[] {
+                new GamePreferenceValue("SoundMaster_h1",RegistryValueKind.DWord,new byte[3]),
+                new GamePreferenceValue("SoundMaster_h1",RegistryValueKind.DWord,new byte[12]),
+                new GamePreferenceValue("SoundMaster_h1",RegistryValueKind.QWord,new byte[4])
+            }) {
+                RawWrite(source,invalid.Name,invalid.Kind,invalid.Bytes);
+                reject(()=>DailyGamePreferenceStore.ReadValues(source,incoming.Parts,0),$"Unsupported numeric width {invalid.Kind}/{invalid.Bytes.Length} is not silently padded or truncated");
+                reject(()=>DailyGamePreferenceStore.WriteValues(target,incoming with{Values=[invalid]}),$"Invalid incoming width {invalid.Kind}/{invalid.Bytes.Length} is rejected before writes");
+                check(DailyGamePreferenceStore.ValuesEqual(DailyGamePreferenceStore.ReadValues(target,before.Parts,0),before.Values),"Invalid snapshot leaves all target preferences intact");
+            }
+            RawWrite(source,"SoundMaster_h1",RegistryValueKind.DWord,BitConverter.GetBytes(0.75));
+            DailyGamePreferenceStore.WriteValues(target,incoming);
+            check(DailyGamePreferenceStore.ValuesEqual(DailyGamePreferenceStore.ReadValues(target,incoming.Parts,0),incoming.Values),"A later valid synchronization succeeds after rejected input");
+        } finally {Registry.CurrentUser.DeleteSubKeyTree(path,false);}
+    }
+    [DllImport("advapi32.dll",EntryPoint="RegSetValueExW",CharSet=CharSet.Unicode)]
+    private static extern int RegSetValueEx(SafeRegistryHandle key,string name,int reserved,RegistryValueKind kind,byte[] bytes,int size);
+    [DllImport("advapi32.dll",EntryPoint="RegQueryValueExW",CharSet=CharSet.Unicode)]
+    private static extern int RegQueryValueEx(SafeRegistryHandle key,string name,IntPtr reserved,out RegistryValueKind kind,byte[] bytes,ref int size);
+    private static void RawWrite(RegistryKey key,string name,RegistryValueKind kind,byte[] bytes)
+    {
+        int error=RegSetValueEx(key.Handle,name,0,kind,bytes,bytes.Length);
+        if(error!=0)throw new IOException("Could not create numeric registry fixture: "+error);
+    }
+    private static GamePreferenceValue RawRead(RegistryKey key,string name)
+    {
+        byte[] bytes=new byte[1024];int size=bytes.Length;
+        int error=RegQueryValueEx(key.Handle,name,IntPtr.Zero,out var kind,bytes,ref size);
+        if(error!=0)throw new IOException("Could not independently inspect numeric registry fixture: "+error);
+        Array.Resize(ref bytes,size);return new(name,kind,bytes);
     }
     private static void FixtureAssembly(string directory)
     {

@@ -10,6 +10,8 @@ using BD2Sichuan;
 namespace BD2Sichuan.Desktop;
 public partial class SichuanWindow : Window
 {
+    // A disabled start button shows the current status line as its ToolTip, so the missing step is one hover away.
+    private void HintStart(){string reason=StatusText.Text;AutoButton.ToolTip=AutoButton.IsEnabled||reason.Length==0?null:reason;}
  public bool HostedAutomationEnabled => automation.Active || automationPreparing || connecting;
     private bool automationPreparing;
     private Task pendingControl = Task.CompletedTask;
@@ -30,7 +32,8 @@ public partial class SichuanWindow : Window
     private SichuanSnapshot? current,solvedBoard;private SichuanSolution? result,solvedResult;
     public SichuanWindow(string? root=null)
     {
-        InitializeComponent();files=new(root??SichuanIdentity.BoardRoot);data=root??SichuanStorage.Data;
+        InitializeComponent();System.Windows.Controls.ToolTipService.SetShowOnDisabled(AutoButton,true);AutoButton.IsEnabledChanged+=(_,_)=>HintStart();var hintProperty=System.ComponentModel.DependencyPropertyDescriptor.FromProperty(System.Windows.Controls.TextBlock.TextProperty,typeof(System.Windows.Controls.TextBlock));EventHandler hintChanged=(_,_)=>HintStart();hintProperty.AddValueChanged(StatusText,hintChanged);Closed+=(_,_)=>hintProperty.RemoveValueChanged(StatusText,hintChanged);HintStart();
+        files=new(root??SichuanIdentity.BoardRoot);data=root??SichuanStorage.Data;
         if(root==null)SichuanStorage.ImportSettings(SichuanIdentity.BoardRoot);
         settingsPath=System.IO.Path.Combine(data,"settings.json");
         files.IntervalMilliseconds=SichuanSettings.Read(settingsPath).IntervalMilliseconds;

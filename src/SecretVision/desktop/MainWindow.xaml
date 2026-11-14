@@ -29,7 +29,7 @@
     <ComboBox x:Name="Target" SelectionChanged="SettingsChanged" MinHeight="36" VerticalContentAlignment="Center"><ComboBoxItem x:Name="Target100"/><ComboBoxItem x:Name="Target80"/></ComboBox>
     <CheckBox x:Name="Retry" Margin="0,18,0,0" Click="SettingsChanged"/>
     <TextBlock x:Name="AttemptsTitle" Margin="0,14,0,6"/>
-    <TextBox x:Name="MaxAttempts" TextChanged="SettingsChanged"/>
+    <Grid><TextBox x:Name="MaxAttempts" TextChanged="SettingsChanged"/><TextBlock x:Name="AttemptsPlaceholder" IsHitTestVisible="False" VerticalAlignment="Center" Margin="11,0,11,0" Foreground="{DynamicResource MutedInk}"/></Grid>
     <TextBlock x:Name="AttemptsHelp" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap"/>
     <TextBlock x:Name="SettingsError" Foreground="{DynamicResource Error}" TextWrapping="Wrap" Margin="0,6,0,0"/>
     <Separator Margin="0,18,0,14"/>

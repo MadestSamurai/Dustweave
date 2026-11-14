@@ -236,6 +236,12 @@ foreach($flavor in $Flavors){
  if($validation.scope -eq 'PracticeRecovery'){
   $check=Join-Path $checks 'sichuan-ui';Run $exe @('--tool','sichuan','--smoke',$check) ($flavor+'-sichuan-ui')
   if(Get-ChildItem -LiteralPath $check -Recurse -File | Where-Object Name -in @('failure.txt','error.json','error.txt')){throw 'Sichuan UI verification failed.'}
+  foreach($id in @('fishing','rhythm','territory','equipment','infinite-gacha','secret-vision','fiend-hunter','mansion-runaway','pandora')){
+   $check=Join-Path $checks ('tools/'+$id);[IO.Directory]::CreateDirectory($check)|Out-Null
+   Run $exe @('--tool',$id,'--smoke',$check) ($flavor+'-tool-'+$id)
+   if(!(Get-ChildItem -LiteralPath $check -File -Recurse -Filter '*.png')){throw "Missing tool UI evidence: $id"}
+   if(Get-ChildItem -LiteralPath $check -File -Recurse|Where-Object Name -in @('failure.txt','error.json','error.txt')){throw "Tool UI reported an error: $id"}
+  }
  }
  if($validation.scope -in @('Observation','Saffron','Resources')){
   $noticeCheck=Join-Path $checks 'smoke-free-notice'
@@ -284,6 +290,14 @@ foreach($flavor in $Flavors){
    Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
    Pass (Join-Path $checks 'evidence/result.json')
   }
+ }
+ if($flavor -eq $Flavors[0] -and $validation.scope -eq 'PracticeRecovery' -and $validation.changed -match '^src/(Runtime/|Shared/Ipc/runtime/)'){
+  Run $exe @('--check-client',$managed,(Join-Path $checks 'observer-client')) 'observer-client'
+  $suiteCache=Join-Path $work 'unified-suite-daily/suite-cache'
+  Copy-DustweavePreparedCache -Source $PreparedCacheDirectory -Destination $suiteCache
+  Run $exe @('--check-suite',$managed,(Join-Path $checks 'suite')) 'unified-suite' 900
+  Pass (Join-Path $checks 'suite/suite.json')
+  Copy-DustweavePreparedCache -Source $suiteCache -Destination $PreparedCacheDirectory
  }
  if($flavor -eq $Flavors[0] -and $validation.scope -eq 'Full'){
   Run $exe @('--check-client',$managed,(Join-Path $checks 'observer-client')) 'observer-client'

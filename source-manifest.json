@@ -172,7 +172,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "be2f9b041fd1d3abbebbc0a02b89aeadcf2d5e91a9c7b0d0be14eb4259973dc8"
+      "sha256": "db244ad75e1ca6e10398a765689c696588b3aeff95cde84d873801fee1c433cd"
     },
     {
       "path": "docs/ALL_IN_ONE_DISTRIBUTION.md",
@@ -240,7 +240,7 @@
     },
     {
       "path": "package.ps1",
-      "sha256": "d9895bf08838d8c096027e48493b1ed7b5e97f87714fd1ceb96cec4a7d14a503"
+      "sha256": "5a3ed4c45aff99196e98eb3735bb298ce3040572cfb4690f12dc64c42f300598"
     },
     {
       "path": "scripts/build-update-acceptance.ps1",
@@ -1180,7 +1180,7 @@
     },
     {
       "path": "src/Core/DailyGamePreferenceStore.cs",
-      "sha256": "7ebd4bcec39a53eda5c6e11513bba1944897d4cb4563f13bc90589956d5568b9"
+      "sha256": "1d2e28c6932b9ea584c97a90db3f081ddb130a63461beda4f06ccc1ba9a2fb7a"
     },
     {
       "path": "src/Core/DailyGamePreparation.cs",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/Core/DailyLogEvidence.cs",
-      "sha256": "353a9d527985f37a04c0c3988db4e12c0b2c5e6cd01f1c5a54b1ccb6b6e9e48c"
+      "sha256": "1dadccf6d97573a4ed67a389e10009750985c245b50a07a41263be55c57416a3"
     },
     {
       "path": "src/Core/DailyLogFileRemoval.cs",
@@ -1284,7 +1284,7 @@
     },
     {
       "path": "src/Core/DailyManagedBusiness.cs",
-      "sha256": "fed839f470857a424349c496a94eea69a9caca1f519afcb79ab1621db46ba979"
+      "sha256": "ee6c105973b5b0c744b97dbaa1ac47246e1a583a28f7e5d2a23ce3d1bccab7ec"
     },
     {
       "path": "src/Core/DailyManagedInputs.cs",
@@ -1912,7 +1912,7 @@
     },
     {
       "path": "src/Desktop/ApostleToolPanel.xaml.cs",
-      "sha256": "62f0cca53d76f4e52a791276ae8e7599445ea8e77c26d74aabdca04b0d9f0d49"
+      "sha256": "106c41d62f84fddb23dbf1256b837db9ee4dff9d49f4a904526af49c46ba6c73"
     },
     {
       "path": "src/Desktop/ApostleToolSession.cs",
@@ -1940,7 +1940,7 @@
     },
     {
       "path": "src/Desktop/DailyBargainWindow.cs",
-      "sha256": "7cc450899a3345718928bb80efa43ca4b69d6bd35649e7064c5666b0c9f52eee"
+      "sha256": "024ef6e5a4af8426806227240cefb9880600b87ba2fa06483339ce9fa364c456"
     },
     {
       "path": "src/Desktop/DailyBargainWindow.Queue.cs",
@@ -2116,7 +2116,7 @@
     },
     {
       "path": "src/Desktop/GoldenPresetWindow.cs",
-      "sha256": "fe320f42d25a0aaa268f2e94a5ee1c9b0e9ecb551ce497f22bd586d64adc7a84"
+      "sha256": "1a4990432af5b76fc1cf0567f071286a40b68ea1d7f4a0a55327d0293200729d"
     },
     {
       "path": "src/Desktop/HostedToolActivity.cs",
@@ -2172,7 +2172,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "fa2ac5302fb0e64c6b168bd65d11037e282f6a3e7141abcce40da1bae2c574f4"
+      "sha256": "016403f75f1565d4ebc2925cacf93a5a303829381845cf9094feab00eff7071c"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -2180,7 +2180,7 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "226f638ff85ad6de0a66cf328e6df190eb3ee810c4755a7dade66f2283a2eb74"
+      "sha256": "55ce2a02e478b57685145c36ab92b6c8a44611a3e6514783db4d80c8a110c415"
     },
     {
       "path": "src/Desktop/LocalizedTextCatalog.cs",
@@ -2448,7 +2448,7 @@
     },
     {
       "path": "src/Desktop/MansionWindow.xaml.cs",
-      "sha256": "9186aad67de4dbcda004f5cff9f843e2835d83f09451b36be0bb8d384db7a4b1"
+      "sha256": "eae869f71aa10074be7edd8137fcc9a4893270b8eaae48c86aec0e5a4a0de67a"
     },
     {
       "path": "src/Desktop/MultiAccountSetupWindow.cs",
@@ -2468,11 +2468,11 @@
     },
     {
       "path": "src/Desktop/PandoraWindow.xaml",
-      "sha256": "f5b1d6e336b5eb92f245197366d205b16705acdb16b6149c317e4b5e72006a30"
+      "sha256": "b8628ccf1217ff176bcc8e84d3cd68279df1dd69ebae9d76584eea166c33e4cc"
     },
     {
       "path": "src/Desktop/PandoraWindow.xaml.cs",
-      "sha256": "bd8aef41d9a1b2c5a144b5bd34ecc6b44de1de3bae3a771c862ee41fa371e47e"
+      "sha256": "094a5f036bb5abfcd936a856cb5f080066fd18e2c33f0c7c03bab9edf3258243"
     },
     {
       "path": "src/Desktop/PluginSharingWindow.cs",
@@ -2536,7 +2536,7 @@
     },
     {
       "path": "src/Desktop/ToolWindowDesign.cs",
-      "sha256": "f59ceea24ec2c041233902a9eec0df34f305b8aac9bde557b0b1b300a9701b78"
+      "sha256": "1a463bdb1929e4d0ad7bd4203c4da216bd36c09671eb660e1080e7f067b91bb1"
     },
     {
       "path": "src/Desktop/TradePlanPanel.cs",
@@ -2700,7 +2700,7 @@
     },
     {
       "path": "src/Equipment/desktop/MainWindow.xaml.cs",
-      "sha256": "31dc74f1762b53647cf0f2244bb93fb49d0d42b7e16c67508526ca21c2dadbc5"
+      "sha256": "c3234af26b6021dd2f7140e78b6b7bd230050ae71a424bfd1b9d872d21c2c61f"
     },
     {
       "path": "src/Equipment/desktop/packages.lock.json",
@@ -2944,11 +2944,11 @@
     },
     {
       "path": "src/FiendHunter/desktop/MainWindow.xaml",
-      "sha256": "3dae24ba42d0a0fa8f15aaf1d625b9810669b865226fb00501188215c4e14e11"
+      "sha256": "aa73ad5ee1e6f83a76354b5561cdc67758dab72bfa9e5120f3c528ee17ccf3f0"
     },
     {
       "path": "src/FiendHunter/desktop/MainWindow.xaml.cs",
-      "sha256": "4cca0b196ca4d1865915ed67b0774fe4943639727996f1f5c4a00c94fcab92f2"
+      "sha256": "740e85845d8fef962feb0a81a7ed71318d98a06e94c8b9d139ddff5e38958dce"
     },
     {
       "path": "src/FiendHunter/desktop/packages.lock.json",
@@ -3188,11 +3188,11 @@
     },
     {
       "path": "src/Fishing/desktop/FishingWindow.xaml",
-      "sha256": "0b213445f4657481622e81aa406899eb5a9b2cdad59bf5fac8ba9813990d4ffd"
+      "sha256": "2a2da56c53368b3e40b7de3ad86a5c7307c07365eeefa69bdbd49854f70ada4f"
     },
     {
       "path": "src/Fishing/desktop/FishingWindow.xaml.cs",
-      "sha256": "e3bc0b74b697a342a13daaf8c0756f25bcb34b72a437476db0164175b60feee4"
+      "sha256": "9faef956f57800083aa09a8092f61a633f5e235bd831365c323c1f73aae4bcb4"
     },
     {
       "path": "src/Fishing/desktop/packages.lock.json",
@@ -3312,7 +3312,7 @@
     },
     {
       "path": "src/Fishing/localization/en-US.json",
-      "sha256": "82e52dc74fa0a15e1d9aea3b6a065818ffce41ac13a7de687db9d08da86edf94"
+      "sha256": "702e510826f11a8838d96fde08e8fd538407bcaa7df881f0ee9993d91146db77"
     },
     {
       "path": "src/Fishing/localization/LanguageCatalog.cs",
@@ -3320,7 +3320,7 @@
     },
     {
       "path": "src/Fishing/localization/zh-CN.json",
-      "sha256": "075621a4fb27a83ffec1ff45900c13bc14ef16354fa81f5939a97dff802619a9"
+      "sha256": "7e69d24678303461fba485c72b78ee4fb06454608c59341775d976fb95a1af68"
     },
     {
       "path": "src/Fishing/README.en.md",
@@ -3504,11 +3504,11 @@
     },
     {
       "path": "src/InfiniteGacha/desktop/MainWindow.xaml",
-      "sha256": "8c5842c41f86980eacd9779cd63c5ab9efc7c3d4d41cff97b196293a1cdcabb0"
+      "sha256": "f505e6cd18aa84482b35acca4639f1a515e28c160e3d27a24a0925b4a77cbd72"
     },
     {
       "path": "src/InfiniteGacha/desktop/MainWindow.xaml.cs",
-      "sha256": "5bd7e1fc46c171427bfd79e50a9a4c490bf6da27f1d4ee1ca2ed40332886f042"
+      "sha256": "b7b8c1b279d7d40d74a8f5fc6152c90cac8c473ed2286e8f906129c82966b9dd"
     },
     {
       "path": "src/InfiniteGacha/desktop/Models.cs",
@@ -3832,11 +3832,11 @@
     },
     {
       "path": "src/Rhythm/desktop/RhythmWindow.xaml",
-      "sha256": "8725134acef88dd6d8685211736eb85ba85a2299a1a999c551e4644abe238bc5"
+      "sha256": "c707a66a26e6fc263eaad4bbd26cd806943f7d27dcb2dc2dfbd452cfd8a6d9d6"
     },
     {
       "path": "src/Rhythm/desktop/RhythmWindow.xaml.cs",
-      "sha256": "a9ee0bccbeed5da803c3d9411847eab236ca5873ccb1dd1af8285f524384c769"
+      "sha256": "584a29a55c3f1d36025ec1c4290a06f388bc44500e7cf91e523747941bcd75fa"
     },
     {
       "path": "src/Rhythm/desktop/Smoke.cs",
@@ -3992,7 +3992,7 @@
     },
     {
       "path": "src/Runtime/Loader.cs",
-      "sha256": "d01157883ca5e95453b2a6fb92427f0a4ad3310da616d38bb54c64357def3838"
+      "sha256": "b53d44dd6a8e22c0fe22e722755fb9c792a4b0d20ff93005bc3aee94ff2951d4"
     },
     {
       "path": "src/Runtime/LoadingTraceHooks.cs",
@@ -4120,11 +4120,11 @@
     },
     {
       "path": "src/SecretVision/desktop/MainWindow.xaml",
-      "sha256": "2e04bcb4092d0f5e708547cca540b8a2b997d51e2fc83019305547c7d3120e49"
+      "sha256": "e0c23bbdae755de585cda6da88852bbc0f99e3881721f667195b96146d803106"
     },
     {
       "path": "src/SecretVision/desktop/MainWindow.xaml.cs",
-      "sha256": "9751eb94f0376076986834c64b65387221bbbc005077200cde9d76bf3165bd59"
+      "sha256": "ab7dc02cb2698417297e0ae56f6d0784737fc001dd90a8dacf8bb337530636ae"
     },
     {
       "path": "src/SecretVision/desktop/packages.lock.json",
@@ -4212,11 +4212,11 @@
     },
     {
       "path": "src/SecretVision/localization/en-US.json",
-      "sha256": "b857b433688ae74cacd0f437483a4306e22dc1be1eb369350b4554264e88e643"
+      "sha256": "17c77f5b857efa972de80bde1f5f5aa43c6e8133490d3647d142cd8349c8263d"
     },
     {
       "path": "src/SecretVision/localization/zh-CN.json",
-      "sha256": "0ca6d47bd3596970fa00e5d7e8383a8ff209a5f8e0f2812accf522e2bede1150"
+      "sha256": "abb5eedb32d80a23bc9825ef2c8788b681dd4b3f53a4eb050d3554d204e9391a"
     },
     {
       "path": "src/SecretVision/README.en.md",
@@ -4320,7 +4320,7 @@
     },
     {
       "path": "src/Shared/Ipc/runtime/MainThread.cs",
-      "sha256": "230f4c3c109bbc280e27bf671f95fbc2248389ffcb9dc7f275a78133d86945da"
+      "sha256": "6666dc110785f368b2fa2063bb7fda7b846d2551fc943511dedfcbafcfa96874"
     },
     {
       "path": "src/Shared/Ipc/runtime/NativeNetworkWatch.cs",
@@ -4440,7 +4440,7 @@
     },
     {
       "path": "src/Sichuan/desktop/SichuanWindow.xaml.cs",
-      "sha256": "6bec48f91585fe329626688207b59974a2d05117bd8fe7c0b9b0844fe5e09654"
+      "sha256": "601966d15443ed57ac691d14d8f0bb2fb78fb502ab74b06ab245394433cadd58"
     },
     {
       "path": "src/Sichuan/desktop/WindowLanguage.cs",
@@ -4940,19 +4940,19 @@
     },
     {
       "path": "src/Territory/desktop/TerritoryWindow.Smoke.cs",
-      "sha256": "59fc679a0ee4bd2d429ad95f0a60c19c2b5a4be91357ce9a19ce904d21ab0d77"
+      "sha256": "a82acedc44dec14fe32a1b19ccb7c8a28a2a125f078fcbb5ac3d41affc7f1cc0"
     },
     {
       "path": "src/Territory/desktop/TerritoryWindow.xaml",
-      "sha256": "ede492028046edd1c6f8abf215e4e49353857b2387a1d7fae8f77e3e97d59ef6"
+      "sha256": "d3314b42cedc6eeee36939f3a1525de3126e74d8dde084e858b5945c3f358594"
     },
     {
       "path": "src/Territory/desktop/TerritoryWindow.xaml.cs",
-      "sha256": "afb864dc323830e396fd4659fa3b2ffa4e5dfc7a1d4a0ead64b9803c2ae30a31"
+      "sha256": "bf4551ff6382dc644ade9110d66fb10b5259db51c3615cc1f920562c655e04ab"
     },
     {
       "path": "src/Territory/desktop/UiLabels.cs",
-      "sha256": "486ceb5af7b485ad8d5067cf402ae9a2c07c4505809958a75e995f03b970251a"
+      "sha256": "412c1b798dfe2b834f8ef2742e6bb71efc89f1b413dc90f7c99ae42c58505631"
     },
     {
       "path": "src/Territory/desktop/WindowText.cs",
@@ -5112,7 +5112,7 @@
     },
     {
       "path": "src/Territory/localization/en-US.json",
-      "sha256": "80b84b2b4bfa4b16ede680250013b0ae948fda477828084989c58651030229eb"
+      "sha256": "a6dc7629b90d46aa9396b701cf5bf1a5d238f99bd5f138714df58e357489cc73"
     },
     {
       "path": "src/Territory/localization/LanguageCatalog.cs",
@@ -5120,7 +5120,7 @@
     },
     {
       "path": "src/Territory/localization/zh-CN.json",
-      "sha256": "5b3fe37359099524863627bb7337380c59ae290a7e8f7aaf5f1b7b1861564c87"
+      "sha256": "a266886aec51de9110a06acd6d431e34c9d9d34b0a33cff12025665593d91203"
     },
     {
       "path": "src/Territory/README.en.md",
@@ -5376,7 +5376,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/BusinessJournalCases.cs",
-      "sha256": "2e983c77340c32fe24d47aa59ae493ae3e125de3de7fad45ab924eee2ff8e8af"
+      "sha256": "005cdfb67dcf06d47f512a852826b58e5eb7f6fac9ad26fef8f05d73c23f16d7"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/BusinessScopeCases.cs",
@@ -5524,7 +5524,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/GamePreferenceCases.cs",
-      "sha256": "a9912c6c1dd3d2d04445aae66648c8bcc270ab6f30612b6fac60b853ccb082da"
+      "sha256": "7cf77dde40936cda4f323b5bb40c859574a5e04251dde8920987bbc4af56eb25"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/GamePreparationCases.cs",
@@ -5589,6 +5589,10 @@
     {
       "path": "tests/Dustweave.Tests/Cases/LoginRecoveryCases.cs",
       "sha256": "9848d9fa3b543ef4d59625fb63268fb0459fecacb6330fca7b71943938ee0c50"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/MainThreadReadinessCases.cs",
+      "sha256": "511d5f208a9103dcd2d4c37a29019017da4a750413b6f4896eb3c5184f8ab3e1"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ManagedBootstrapCases.cs",
@@ -6012,7 +6016,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "1bea9f799c50562723856eaacb03ecf9cae93f31425de2b4f2e45dfdc0ede75d"
+      "sha256": "44620d26e92d61386fcaf130349fc75e67a23446bcccf2e9ddd4c4e8abea59d8"
     },
     {
       "path": "tests/Dustweave.Tests/README.md",
@@ -6248,11 +6252,11 @@
     },
     {
       "path": "docs/TOOL_UX_GOAL.md",
-      "sha256": "66ad5a2aa1f6324b0f5e515e729035b6c508999d4cf947ee5f324e337234fc2e"
+      "sha256": "0d51fc25e3b40df8a91cac7583a5cae4cda42dc8889dffbf9ed072cd7f944a80"
     },
     {
       "path": "docs/TOOL_UX_AUDIT.md",
-      "sha256": "8b46f8944491627ab77dbe1ea65623a9c5a524b2dcc6cba0240d5092608b1235"
+      "sha256": "6c6568dd554d781c90edf07dad840d217e00863bc02cacb0a2f5a90542bf0558"
     }
   ],
   "publicReleaseApproved": false,

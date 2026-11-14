@@ -13,7 +13,7 @@ public partial class TerritoryWindow {
   var checks=new List<string>();void Check(bool ok,string label){if(!ok)throw new InvalidOperationException(label);checks.Add(label);}
   Check(!link.Enabled&&!StartButton.IsEnabled&&TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"))?.Enabled!=true,"启动不自动操作游戏");
   Check(LoggingBox.IsChecked==true&&MiningBox.IsChecked==true&&FarmingBox.IsChecked==true,"默认三个项目可见并选中");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-  Check(IntervalBox.Text=="500"&&BudgetBox.Text=="0","默认间隔与不限播种预算");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Check(IntervalBox.Text=="500"&&BudgetBox.Text==""&&BudgetPlaceholder.Visibility==Visibility.Visible,"默认间隔与不限播种预算");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   var migrationRoot=Path.Combine(output,"budget-migration");Directory.CreateDirectory(migrationRoot);
   var migrationPath=Path.Combine(migrationRoot,"settings.json");
   Check(TerritoryPreferences.Load(migrationRoot).PlantingBudget==0,"新用户默认不限播种预算");

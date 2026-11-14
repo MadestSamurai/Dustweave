@@ -30,7 +30,7 @@ namespace BD2Daily.Runtime
                 if(!handoff.IsActive&&!handoff.Pending)RuntimeFiles.Start(LocalStorage.Root,Build.Fingerprint,DailyIdentity.LiveEntries);
                 handoff.Request(DateTime.UtcNow);
                 if(frame==null)frame=new MainThread(()=>{LegacyPilots.Discover();handoff.Tick(DateTime.UtcNow);return handoff.Pending;},handoff.Fail);
-                frame.Schedule();
+                frame.ScheduleWhenReady(TimeSpan.FromSeconds(30));
             }
         }
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
@@ -51,6 +51,12 @@ namespace BD2Daily.Runtime
         private static object Invoke(string method){return engine.GetType().GetMethod(method,BindingFlags.Instance|BindingFlags.NonPublic).Invoke(engine,null);}
         public static void Unload()
         {
+            lock(typeof(Loader)) {
+                if(frame!=null)frame.Dispose();
+                // No engine has started yet, so there is no Unity object to
+                // drain. Cancel a cold-start wait even before Canvas exists.
+                if(engine==null){if(handoff!=null)handoff.Unload();return;}
+            }
             MainThread.Drain(()=>{if(handoff!=null)handoff.Unload();},WriteStatus);
         }
         internal static void WriteStatus(string state,string error)

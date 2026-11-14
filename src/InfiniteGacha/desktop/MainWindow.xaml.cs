@@ -29,7 +29,10 @@ public partial class MainWindow:Window
     private readonly List<NotificationChannel> smokeNotifications=new();
     public MainWindow(IClientPort port,string root,bool smoke)
     {
-        InitializeComponent();language=new WindowLanguage(this,LanguagePreference.Read(root));Ui.Catalog=language.Catalog;LanguageChoice.SelectedIndex=language.Catalog.Language=="zh-CN"?0:1;this.port=port;this.root=root;this.smoke=smoke;controller=new(port,record:(state,message)=>Diagnostics.Write(root,"desktop",state,message));preferences=new(root);controller.Stop();
+        InitializeComponent();
+        // In a short window the ten-pull cards scroll within one row, so the A/B lists keep their height.
+        SizeChanged+=(_,_)=>ResultScroll.MaxHeight=Math.Max(60,ActualHeight-700);
+        language=new WindowLanguage(this,LanguagePreference.Read(root));Ui.Catalog=language.Catalog;LanguageChoice.SelectedIndex=language.Catalog.Language=="zh-CN"?0:1;this.port=port;this.root=root;this.smoke=smoke;controller=new(port,record:(state,message)=>Diagnostics.Write(root,"desktop",state,message));preferences=new(root);controller.Stop();
         notificationPreferences=new(root);notifications=new(this);
         try{notificationOptions=notificationPreferences.Load();}catch(Exception e){Error(e);}
         NotifyWindows.IsChecked=notificationOptions.Windows;NotifyPopup.IsChecked=notificationOptions.Popup;NotifySound.IsChecked=notificationOptions.Sound;TestNotification.IsEnabled=notificationOptions.Any;
@@ -82,7 +85,7 @@ public partial class MainWindow:Window
             }
             if(!connecting)StatusText.Text=(controller.Notice.Length>0?controller.Notice:next.Message)+(next.Owner.Length>0?$"  本次 {next.Rolls} 次 · A {next.A} / B {next.B}":"");
             StatusText.Foreground=(Brush)FindResource(next.State=="error"?"Error":next.State=="matched"?"Success":"Ink");
-            if(resultKey!=next.ResultKey){resultKey=next.ResultKey;ShowResult();if(next.ResultReady&&(controller.Running||next.State=="matched"))ResultExpander.IsExpanded=true;}
+            if(resultKey!=next.ResultKey){resultKey=next.ResultKey;ShowResult();if(next.ResultReady&&(next.State=="matched"||controller.Running&&ActualHeight>=840))ResultExpander.IsExpanded=true;}
             SetEnabled();
             var matched=controller.TakeMatch();
             if(matched!=null){ResultExpander.IsExpanded=true;ShowResult();DeliverNotification(false,matched);}
@@ -171,7 +174,12 @@ public partial class MainWindow:Window
         if(StartButton==null||controller==null)return;bool running=controller.Running;
         bool edit=!running&&!connecting;ConnectButton.IsEnabled=edit;Pools.IsEnabled=edit;GroupsPanel.IsEnabled=edit;TopSettings.IsEnabled=edit;Conditions.IsEnabled=edit;OtherSettings.IsEnabled=edit;GroupActions.IsEnabled=edit;AddUnfilled.IsEnabled=edit&&snapshot?.InventoryReady==true;
         string error=pool==null?"no pool":Rules.Validate(draft,pool.Costumes);
-        StartButton.IsEnabled=edit&&error==""&&snapshot?.ResultReady==true&&!snapshot.Locked&&snapshot.PoolId==pool?.Id&&GameFresh();StopButton.IsEnabled=running;UpdateTransfers();
+        bool fresh=GameFresh();
+        StartButton.IsEnabled=edit&&error==""&&snapshot?.ResultReady==true&&!snapshot.Locked&&snapshot.PoolId==pool?.Id&&fresh;StopButton.IsEnabled=running;UpdateTransfers();
+        // A disabled Start repeats what is missing (the validation line first, otherwise the status line); Dustweave highlights Connect while it is the next step.
+        ToolTipService.SetShowOnDisabled(StartButton,true);
+        string reason=error!=""&&ValidationText.Text.Length>0?ValidationText.Text:StatusText.Text;StartButton.ToolTip=StartButton.IsEnabled||!edit||reason.Length==0?null:reason;
+        ConnectButton.Tag=edit&&!fresh?"next":null;
     }
     private void ChangeSelected(ListBox list,int group)
     {

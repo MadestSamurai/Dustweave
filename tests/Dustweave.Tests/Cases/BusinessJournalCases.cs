@@ -58,7 +58,85 @@ static class BusinessJournalCases
         LargeHistory(output, cases);
         IncompletePickupHistory(output, cases);
         await IncompleteObservationHistory(output, cases);
+        await CompactedEventHistory(output, cases);
         await Replan(output, cases);
+    }
+    private static async Task CompactedEventHistory(string root, List<string> cases)
+    {
+        void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
+        foreach (bool conflict in new[] { false, true })
+        {
+            var proof = new DailyBusinessProof("equipment.refine", "equipment", ["equipment"], (_, events, _) =>
+            {
+                if (events.Count != 2 || S(events[0]!["Kind"]) != "request" || S(events[1]!["Kind"]) != "response"
+                    || S(events[1]!["Values"]![0]!["Json"]) != "true") throw new InvalidDataException("Unconfirmed fixture receipt");
+                return O(("verified", true));
+            });
+            var independent = new DailyBusinessProof("cafeteria.regular_all", "cafeteria_guests", ["cafeteria"], (_, _, _) => O(("verified", true)));
+            using var f = new WorkflowHarness(Path.Combine(root, "event-compaction-" + conflict), [proof, independent]);
+            f.Page("GameFieldDefaultUI", "_objBackButton");
+            var op = f.Business.Create(f.Context, proof.Role, f.Evidence(), new(), new());
+            f.Event(proof.Role, "request");
+            f.Event(proof.Role, "response", ("Result", true));
+            var original = f.Driver.CollectEvents(proof.Role, f.Ticks);
+            Check(original.Count == 2 && original[0]!["Frame"]!["Surfaces"] != null, "pending operation retains its original full event snapshot");
+            op["events"] = original.DeepClone(); op["last_observation"] = f.Evidence(); op["state"] = "unknown"; f.Business.Save(op);
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(f.Root, "live", "event-journal"), "*.json"))
+            {
+                Check(DailyLogEvidence.CompactRecord(f.Root, path, true), "completed later workflow can compact a shared archived event");
+                var archived = DailyJson.TryRead<JsonObject>(path)!;
+                Check(archived["Frame"]!["Surfaces"] == null && S(archived["diagnostic_storage"]) == "recovery-facts-v1", "archived copy omits only diagnostic UI trees");
+                if (conflict && S(archived["Kind"]) == "response")
+                { archived["Values"]![0]!["Json"] = "false"; DailyJson.Write(path, archived); }
+            }
+            // The game process no longer supplies raw events; recovery must merge
+            // the persisted pending operation with the compacted local archive.
+            foreach (string key in f.Box.Values.Keys.Where(k => k.StartsWith("live:events~", StringComparison.Ordinal)).ToArray()) f.Box.Values.Remove(key);
+            var other = f.Business.Create(f.Context, independent.Role, f.Evidence(), new(), new());
+            other["state"] = "unknown"; other["last_observation"] = f.Evidence(); f.Business.Save(other);
+            using var resumed = new DailyManagedBusiness(f.Root, f.Driver, [proof, independent], () => f.Stopped);
+            if (!conflict)
+            {
+                Check(resumed.Events(op).Count == 2, "compaction does not invent conflicting native sequences or duplicate events");
+                var report = await resumed.ReconcileAsync(f.Context);
+                Check(report["completed"]!.AsArray().Count == 2 && report["unresolved"]!.AsArray().Count == 0 && f.Box.Commands.Count == 0,
+                    "restart reconciles full pending evidence with compacted history without dispatching input");
+                Check((await resumed.ReconcileAsync(f.Context))["unresolved"]!.AsArray().Count == 0,
+                    "repeated recovery stays resolved after compacted event reconciliation");
+            }
+            else
+            {
+                bool rejected = false;
+                try { resumed.Events(op); } catch (InvalidDataException) { rejected = true; }
+                Check(rejected, "different native results with the same sequence are still rejected");
+                var report = await resumed.ReconcileAsync(f.Context);
+                Check(report["completed"]!.AsArray().Count == 1 && report["unresolved"]!.AsArray().Count == 1
+                    && JsonNode.DeepEquals(report["unresolved"]![0]!["stages"], new JsonArray("equipment")) && f.Box.Commands.Count == 0,
+                    "genuine historical event conflict remains local while independent recovery completes");
+                Check((await resumed.ReconcileAsync(f.Context))["unresolved"]!.AsArray().Count == 1
+                    && JsonNode.DeepEquals(resumed.Records(f.Context, proof.Role).Single()["events"], original),
+                    "repeated conflict recovery preserves original evidence without claiming success or replaying");
+                f.Stopped = true;
+                bool stopped = false;
+                try { await resumed.ReconcileAsync(f.Context); } catch (StageHostException e) when (e.Kind == "stopped") { stopped = true; }
+                Check(stopped, "event conflict recovery remains cancellable"); f.Stopped = false;
+                await resumed.ReplanInterruptedAsync(f.Context, "equipment");
+                var old = resumed.Records(f.Context, proof.Role).Single();
+                var next = resumed.Create(f.Context, proof.Role, f.Evidence(), new(), O(("fresh_plan", true)));
+                Check(S(old["state"]) == "superseded" && old["result"] == null && S(next["id"]) != S(op["id"]) && f.Box.Commands.Count == 0,
+                    "ready current page permits a fresh plan after conflict without replaying the old consuming action");
+            }
+        }
+        var eventFacts = WorkflowCases.Event("equipment.refine", "response", 7, ("Result", true));
+        foreach (string field in new[] { "Sequence", "AtUtcTicks", "Role", "Kind", "Accepted", "ErrorCode", "Error" })
+        {
+            var changed = eventFacts.DeepClone().AsObject();
+            changed[field] = field is "Sequence" or "AtUtcTicks" or "ErrorCode" ? JsonValue.Create(999L)
+                : field == "Accepted" ? JsonValue.Create(false) : JsonValue.Create("different");
+            Check(!DailyLogEvidence.SameEventFacts(eventFacts, changed), "event compaction comparison preserves " + field);
+        }
+        var foreign = eventFacts.DeepClone().AsObject(); foreign["Frame"]!["AccountKey"] = "other-account";
+        Check(!DailyLogEvidence.SameEventFacts(eventFacts, foreign), "event compaction comparison preserves actor identity");
     }
     private static void LargeHistory(string output, List<string> cases)
     {

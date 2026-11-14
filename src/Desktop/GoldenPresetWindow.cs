@@ -28,7 +28,7 @@ public sealed class GoldenPresetWindow : Window
         L.Bind(this, TitleProperty, "tool.golden-presets");
         var layout = new DockPanel { Margin = new(24, 0, 24, 24) };
         var bottom = new DockPanel { LastChildFill = false, Margin = new(0, 12, 0, 0) };
-        bottom.Children.Add(read); DockPanel.SetDock(import, Dock.Right); bottom.Children.Add(import); import.SetResourceReference(StyleProperty, "PrimaryButton");
+        bottom.Children.Add(read); DockPanel.SetDock(import, Dock.Right); bottom.Children.Add(import); import.SetResourceReference(StyleProperty, "PrimaryButton"); ToolWindowDesign.ExplainDisabled(import, status);
         DockPanel.SetDock(bottom, Dock.Bottom); layout.Children.Add(bottom);
         DockPanel.SetDock(progress, Dock.Bottom); layout.Children.Add(progress); DockPanel.SetDock(status, Dock.Bottom); layout.Children.Add(status);
         var content = new StackPanel();

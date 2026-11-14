@@ -40,7 +40,7 @@ public partial class MainWindow : Window
         language.Select(preferences.DisplayLanguage);LanguageChoice.SelectedIndex=preferences.DisplayLanguage=="zh-CN"?0:1;
         foreach(var pair in stages.Select((box,i)=>(box,i)))pair.box.IsChecked=preferences.Settings.Stages.Contains(pair.i+1);
         Target.SelectedIndex=preferences.Settings.TargetPercent==100?0:1;Retry.IsChecked=preferences.Settings.Retry;
-        MaxAttempts.Text=preferences.Settings.MaxAttempts.ToString();DataPath.Text=smoke?root:SecretVisionStorage.Diagnostics;
+        MaxAttempts.Text=preferences.Settings.MaxAttempts>0?preferences.Settings.MaxAttempts.ToString():"";DataPath.Text=smoke?root:SecretVisionStorage.Diagnostics;
         initializing=false;ApplyLanguage();ValidateSettings(false);
         timer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(500)};timer.Tick+=(_,_)=>Poll();
         Loaded+=async(_,_)=>{Poll();timer.Start();if(smoke&&runSmoke)await SmokeAsync();};
@@ -55,7 +55,7 @@ public partial class MainWindow : Window
         ClaimedLegend.Text=language["claimed"];PlayerLegend.Text=language["player"];EnemyLegend.Text=language["enemy"];ItemLegend.Text=language["item"];
         StagesTitle.Text=language["stages"];StagesHelp.Text=language["stages-help"];TargetTitle.Text=language["target"];
         Target100.Content=language["target100"];Target80.Content=language["target80"];Retry.Content=language["retry"];
-        AttemptsTitle.Text=language["attempts"];AttemptsHelp.Text=language["attempts-help"];OperationTitle.Text=language["operation"];OperationHelp.Text=language["operation-help"];
+        AttemptsTitle.Text=language["attempts"];AttemptsHelp.Text=language["attempts-help"];AttemptsPlaceholder.Text=language["attempts-unlimited"];OperationTitle.Text=language["operation"];OperationHelp.Text=language["operation-help"];
         Diagnostics.Header=language["diagnostics"];DiagnosticHelp.Text=language["diagnostic-help"];
         System.Windows.Automation.AutomationProperties.SetName(MaxAttempts,language["attempts"]);
         System.Windows.Automation.AutomationProperties.SetName(Target,language["target"]);
@@ -69,11 +69,16 @@ public partial class MainWindow : Window
         string selected=AppDomain.CurrentDomain.GetData("BD2Daily.HostedLanguage") as string ?? (LanguageChoice.SelectedIndex==0?"zh-CN":"en-US");language.Select(selected);ApplyLanguage();
         try{preferences.SelectLanguage(data,selected);}catch(Exception error){ShowError(error);}
     }
-    private void SettingsChanged(object sender,RoutedEventArgs e){if(!initializing)ValidateSettings(true);}
+    private void SettingsChanged(object sender,RoutedEventArgs e)
+    {
+        // A blank attempt limit means unlimited; the field says so instead of showing 0.
+        if(AttemptsPlaceholder!=null)AttemptsPlaceholder.Visibility=MaxAttempts.Text.Length==0?Visibility.Visible:Visibility.Collapsed;
+        if(!initializing)ValidateSettings(true);
+    }
     private Settings? ValidateSettings(bool save)
     {
         try{
-            if(!int.TryParse(MaxAttempts.Text,out int attempts))throw new ArgumentException("invalid-attempts");
+            int attempts=0;if(MaxAttempts.Text.Trim().Length>0&&!int.TryParse(MaxAttempts.Text,out attempts))throw new ArgumentException("invalid-attempts");
             var settings=new Settings{Stages=stages.Select((box,i)=>(box,i)).Where(x=>x.box.IsChecked==true).Select(x=>x.i+1).ToArray(),
                 Retry=Retry.IsChecked==true,TargetPercent=Target.SelectedIndex==0?100:80,MaxAttempts=attempts};
             settings.Validate();validation="";
@@ -101,7 +106,9 @@ public partial class MainWindow : Window
         LiveState.Text=language[fresh?"live":snapshot==null?"waiting":"stale"];
         BoardStats.Text=snapshot?.Board is Board b?language.Format("stats",b.Percent,b.Remaining):"—";BoardStats.Visibility=EmptyBoard.Visibility==Visibility.Visible?Visibility.Collapsed:Visibility.Visible;
         RunStatus.Text=language[status];RunStatus.Foreground=(Brush)FindResource(status is "blocked" or "file-access" or "permission"||diagnostic.Length>0&&!running?"Error":status=="completed"?"Success":"Ink");
-        RunDetail.Text=progress.Stage>0?language.Format("progress",progress.Stage,progress.Attempt,progress.Cleared.Count==0?language["none"]:string.Join(", ",progress.Cleared)):language["open-secret-vision"];
+        // Starting discards a round already on the board; say so beside the Start button, not only in the side notes.
+        bool restarts=!running&&!connecting&&fresh&&snapshot?.Board!=null;
+        RunDetail.Text=restarts&&progress.Stage==0?language["start-restarts"]:progress.Stage>0?language.Format("progress",progress.Stage,progress.Attempt,progress.Cleared.Count==0?language["none"]:string.Join(", ",progress.Cleared)):language["open-secret-vision"];
         DiagnosticText.Text=diagnostic;SettingsError.Text=validation.Length>0?language[validation]:"";SetEnabled();
     }
     private void SetEnabled()
@@ -109,6 +116,9 @@ public partial class MainWindow : Window
         bool busy=running||connecting;SettingsPanel.IsEnabled=!busy;ConnectButton.IsEnabled=!busy;
         StartButton.IsEnabled=!busy&&fresh&&validation.Length==0&&(snapshot?.Board!=null||snapshot?.UIs.Any(u=>u.Type=="HopscotchMainUI")==true);
         StopButton.IsEnabled=busy;MaxAttempts.IsEnabled=Retry.IsChecked==true;
+        // A disabled Start names the missing step; an enabled one warns when it will restart a live round.
+        StartButton.ToolTip=busy?null:!fresh?language["start-needs-connection"]:validation.Length>0?language[validation]:!StartButton.IsEnabled?language["open-secret-vision"]:snapshot?.Board!=null?language["start-restarts"]:null;
+        ConnectButton.Tag=!busy&&!fresh?"next":null; // Dustweave highlights the next step.
     }
     private void ShowError(Exception error){status=ErrorKind.Status(error);diagnostic=error.ToString();Files.Diagnose(root,"desktop",error);Render();}
     private async void ConnectClick(object sender,RoutedEventArgs e)

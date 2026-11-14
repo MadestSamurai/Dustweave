@@ -48,6 +48,21 @@ public sealed class DailyLogEvidence : IDisposable
         }
         else if (node is JsonArray array) foreach (var child in array) RemoveUiTrees(child);
     }
+    // An archived event and its in-flight copy can straddle compaction. Compare
+    // the same recovery facts that compaction preserves, not optional UI trees.
+    // Identity, timestamps, sequence, role and every native result remain strict.
+    internal static bool SameEventFacts(JsonObject left, JsonObject right)
+    {
+        if (JsonNode.DeepEquals(left, right)) return true;
+        JsonObject Facts(JsonObject source)
+        {
+            var copy = source.DeepClone().AsObject();
+            RemoveUiTrees(copy);
+            if (Text(copy["diagnostic_storage"]) == "recovery-facts-v1") copy.Remove("diagnostic_storage");
+            return copy;
+        }
+        return JsonNode.DeepEquals(Facts(left), Facts(right));
+    }
     internal static JsonObject QueueSnapshot(JsonObject record)
     {
         var saved = record.DeepClone().AsObject();

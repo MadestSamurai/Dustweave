@@ -24,6 +24,22 @@ internal static class ToolWindowDesign
         _ => null
     };
 
+    // A disabled primary action shows the tool's current status line as its ToolTip, so the missing
+    // step is one hover away. An empty status shows no ToolTip at all.
+    internal static void ExplainDisabled(Button action, TextBlock status)
+    {
+        ToolTipService.SetShowOnDisabled(action, true);
+        var text = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(TextBlock.TextProperty, typeof(TextBlock));
+        void Apply(object? sender, EventArgs e) => action.ToolTip = action.IsEnabled || status.Text.Length == 0 ? null : status.Text;
+        action.IsEnabledChanged += (_, _) => Apply(null, EventArgs.Empty);
+        // Listen only while the status line is in a live tree, so a closed window is not kept alive;
+        // shared chrome may re-parent the content after it was first loaded.
+        void Listen(object? sender, RoutedEventArgs e) { text.RemoveValueChanged(status, Apply); text.AddValueChanged(status, Apply); Apply(null, EventArgs.Empty); }
+        status.Loaded += Listen;
+        status.Unloaded += (_, _) => text.RemoveValueChanged(status, Apply);
+        Listen(null, new RoutedEventArgs());
+    }
+
     internal static void ApplyActions(Window window)
     {
         var id = Id(window);

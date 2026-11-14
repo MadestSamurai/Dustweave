@@ -21,7 +21,7 @@
   "target80": "80% regular clear",
   "retry": "Retry if target is not reached",
   "attempts": "Maximum attempts per stage",
-  "attempts-help": "0 means unlimited; use 1–1000 for a limit.",
+  "attempts-help": "Leave blank for unlimited, or enter 1–1000.",
   "operation": "Starting and stopping",
   "operation-help": "Start ends the current round and begins a new one. Stop releases input and pauses. Starting again opens a new round. No automatic revival.",
   "idle": "Not started",
@@ -44,7 +44,7 @@
   "single-instance": "The assistant is already open. Check your taskbar.",
   "invalid-stages": "Select at least one stage.",
   "invalid-target": "Select a valid clear target.",
-  "invalid-attempts": "Attempts must be a whole number from 0 to 1000. Your input is preserved.",
+  "invalid-attempts": "Leave attempts blank or enter a whole number from 1 to 1000. Your input is preserved.",
   "settings-unreadable": "Settings could not be read. The original file is unchanged.",
   "game-not-running": "Start the game and log in first.",
   "multiple-games": "Multiple game processes found. Keep only one running.",
@@ -62,5 +62,8 @@
   "stopping": "Stopping and releasing input…",
   "startup-error": "Startup failed",
   "file-access": "A local file could not be accessed. See diagnostics for the path and cause.",
-  "等待小游戏结算回读": "Waiting for the minigame result confirmation"
+  "等待小游戏结算回读": "Waiting for the minigame result confirmation",
+  "start-restarts": "A round is in progress: Start ends it and begins a new one.",
+  "start-needs-connection": "Connect to the game first.",
+  "attempts-unlimited": "Unlimited"
 }

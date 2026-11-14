@@ -318,5 +318,8 @@
   "等待游戏完成收获结算，恢复后自动继续": "Waiting for the game to finish catch settlement; automation will resume",
   "等待游戏进入抛竿状态，恢复后自动继续": "Waiting for the game to start casting; automation will resume",
   "等待游戏完成提竿，恢复后自动继续": "Waiting for the game to finish hooking; automation will resume",
-  "等待游戏完成抛竿，恢复后自动继续": "Waiting for the game to finish casting; automation will resume"
+  "等待游戏完成抛竿，恢复后自动继续": "Waiting for the game to finish casting; automation will resume",
+  "取消后，游戏不允许出售或信息读不全的鱼仍会跳过。": "When off, fish the game will not sell, or whose details cannot be read, are still skipped.",
+  "设置改完即保存。「下一竿间隔」只影响两竿之间的等待，不影响收线。": "Settings save as you change them. The next-cast delay only affects the wait between casts, not reeling.",
+  "设置已保存。": "Settings saved."
 }
